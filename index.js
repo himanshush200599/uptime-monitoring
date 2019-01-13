@@ -10,10 +10,18 @@ var server = http.createServer(function(req, res) {
 
   var path = parsedUrl.pathname;
   var trimmedPath = path.replace(/^\/+|\/+$/g, "");
-
+  var queryStringObject = parsedUrl.query;
+  var method = req.method.toLowerCase();
   res.end("Hello world\n");
 
-  console.log("Request received on path: " + trimmedPath);
+  console.log(
+    "Request received on path: " +
+      trimmedPath +
+      " with method " +
+      method +
+      " with query parameters :" +
+      queryStringObject
+  );
 });
 
 server.listen(3000, function() {
