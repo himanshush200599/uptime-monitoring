@@ -12,6 +12,7 @@ var server = http.createServer(function(req, res) {
   var trimmedPath = path.replace(/^\/+|\/+$/g, "");
   var queryStringObject = parsedUrl.query;
   var method = req.method.toLowerCase();
+  var headers = req.headers;
   res.end("Hello world\n");
 
   console.log(
@@ -22,6 +23,7 @@ var server = http.createServer(function(req, res) {
       " with query parameters :" +
       queryStringObject
   );
+  console.log("Headers are :" + headers);
 });
 
 server.listen(3000, function() {
