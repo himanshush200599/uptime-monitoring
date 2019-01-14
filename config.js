@@ -8,13 +8,15 @@
 //container for all the enviroments
 var environments = {};
 //staging(default) environemnt
-environemnts.staging = {
-  port: 3000,
+environments.staging = {
+  httpPort: 3000,
+  httpsPort: 3001,
   envName: "staging"
 };
 
 environments.production = {
-  port: 5000,
+  httpPort: 5000,
+  httpsPort: 5001,
   envName: "production"
 };
 
@@ -25,7 +27,7 @@ var currentEnviroment =
     ? process.env.NODE_ENV.toLowerCase()
     : "";
 var enviromentToExport =
-  typeof enviroments[currentEnviroment] == "object"
-    ? enviroments[currentEnviroment]
-    : enviroments.staging;
+  typeof environments[currentEnviroment] == "object"
+    ? environments[currentEnviroment]
+    : environments.staging;
 module.exports = enviromentToExport;

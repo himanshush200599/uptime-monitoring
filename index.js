@@ -6,13 +6,56 @@
 
 //reuired dependencies
 var http = require("http");
+var https = require("https");
 var url = require("url");
-
-//string decoder modules
 var StringDecoder = require("string_decoder").StringDecoder;
 var config = require("./config");
-//create server and running
-var server = http.createServer(function(req, res) {
+var fs = require("fs");
+//Instantenous HTTP server and running
+var httpServer = http.createServer(function(req, res) {
+  unifiedServer(req, res);
+});
+
+httpServer.listen(config.httpPort, function() {
+  console.log(
+    `The server is listening on port ${config.httpPort} in ${
+      config.envName
+    } mode`
+  );
+});
+//Instantenous HTTPS server and running
+var httpsServerOptions = {
+  key: fs.readFileSync("./https/key.pem"),
+  cert: fs.readFileSync("./https/cert.pem")
+};
+var httpsServer = https.createServer(httpsServerOptions, function(req, res) {
+  unifiedServer(req, res);
+});
+
+httpsServer.listen(config.httpsPort, function() {
+  console.log(
+    `The server is listening on port ${config.httpsPort} in ${
+      config.envName
+    } mode`
+  );
+});
+
+//defines the handlers
+var handlers = {};
+
+handlers.sample = function(data, callback) {
+  callback(406, { name: "sample handler" });
+};
+handlers.notFound = function(data, callback) {
+  callback(404);
+};
+//define a request router
+var router = {
+  sample: handlers.sample
+};
+
+//All the servers logic for both the http and https servers
+var unifiedServer = function(req, res) {
   //parsed url var
   var parsedUrl = url.parse(req.url, true);
   //extracr relative url path
@@ -63,24 +106,4 @@ var server = http.createServer(function(req, res) {
       console.log("Returning the response :", statusCode, payloadString);
     });
   });
-});
-
-server.listen(config.port, function() {
-  console.log(
-    `The server is listening on port ${config.port} in ${config.envName} mode`
-  );
-});
-
-//defines the handlers
-var handlers = {};
-
-handlers.sample = function(data, callback) {
-  callback(406, { name: "sample handler" });
-};
-handlers.notFound = function(data, callback) {
-  callback(404);
-};
-//define a request router
-var router = {
-  sample: handlers.sample
 };
