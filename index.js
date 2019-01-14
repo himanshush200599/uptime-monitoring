@@ -43,7 +43,7 @@ var server = http.createServer(function(req, res) {
     var chosenHandler =
       typeof router[trimmedPath] !== "undefined"
         ? router[trimmedPath]
-        : notFound;
+        : handlers.notFound;
     var data = {
       trimmedPath: trimmedPath,
       queryStringObject: queryStringObject,
@@ -56,8 +56,8 @@ var server = http.createServer(function(req, res) {
       statusCode = typeof statusCode == "number" ? statusCode : "200";
       payload = typeof payload == "object" ? payload : {};
 
-      var payloadString = JSON.strigify(payload);
-
+      var payloadString = JSON.stringify(payload);
+      res.setHeader("Content-Type", "application/json");
       res.writeHead(statusCode);
       res.end(payloadString);
       console.log("Returning the response :", statusCode, payloadString);
