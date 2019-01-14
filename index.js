@@ -11,6 +11,12 @@ var url = require("url");
 var StringDecoder = require("string_decoder").StringDecoder;
 var config = require("./config");
 var fs = require("fs");
+var _data = require("./lib/data");
+
+_data.delete("test", "file11", function(err) {
+  console.log(err);
+});
+
 //Instantenous HTTP server and running
 var httpServer = http.createServer(function(req, res) {
   unifiedServer(req, res);
@@ -43,15 +49,15 @@ httpsServer.listen(config.httpsPort, function() {
 //defines the handlers
 var handlers = {};
 
-handlers.sample = function(data, callback) {
-  callback(406, { name: "sample handler" });
+handlers.ping = function(data, callback) {
+  callback(200);
 };
 handlers.notFound = function(data, callback) {
   callback(404);
 };
 //define a request router
 var router = {
-  sample: handlers.sample
+  ping: handlers.ping
 };
 
 //All the servers logic for both the http and https servers
