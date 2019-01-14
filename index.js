@@ -10,7 +10,7 @@ var url = require("url");
 
 //string decoder modules
 var StringDecoder = require("string_decoder").StringDecoder;
-
+var config = require("./config");
 //create server and running
 var server = http.createServer(function(req, res) {
   //parsed url var
@@ -65,8 +65,10 @@ var server = http.createServer(function(req, res) {
   });
 });
 
-server.listen(3000, function() {
-  console.log("The server is listening on port 3000");
+server.listen(config.port, function() {
+  console.log(
+    `The server is listening on port ${config.port} in ${config.envName} mode`
+  );
 });
 
 //defines the handlers
