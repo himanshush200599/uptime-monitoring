@@ -39,21 +39,46 @@ var server = http.createServer(function(req, res) {
   req.on("end", function() {
     buffer += decoder.end();
 
-    res.end("Hello world\n");
+    //choose the handler to  send for a particular request if not any route send to 404
+    var chosenHandler =
+      typeof router[trimmedPath] !== "undefined"
+        ? router[trimmedPath]
+        : notFound;
+    var data = {
+      trimmedPath: trimmedPath,
+      queryStringObject: queryStringObject,
+      method: method,
+      headers: headers,
+      payload: buffer
+    };
 
-    console.log(
-      "Request received on path: " +
-        trimmedPath +
-        " with method " +
-        method +
-        " with query parameters :" +
-        queryStringObject
-    );
-    console.log("Headers are :" + headers);
-    console.log("Payload is " + buffer);
+    chosenHandler(data, function(statusCode, payload) {
+      statusCode = typeof statusCode == "number" ? statusCode : "200";
+      payload = typeof payload == "object" ? payload : {};
+
+      var payloadString = JSON.strigify(payload);
+
+      res.writeHead(statusCode);
+      res.end(payloadString);
+      console.log("Returning the response :", statusCode, payloadString);
+    });
   });
 });
 
 server.listen(3000, function() {
   console.log("The server is listening on port 3000");
 });
+
+//defines the handlers
+var handlers = {};
+
+handlers.sample = function(data, callback) {
+  callback(406, { name: "sample handler" });
+};
+handlers.notFound = function(data, callback) {
+  callback(404);
+};
+//define a request router
+var router = {
+  sample: handlers.sample
+};
