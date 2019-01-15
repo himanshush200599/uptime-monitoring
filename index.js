@@ -1,35 +1,23 @@
-// This is primary file for  API
-// Here we are building RESTful API in pure nodejs without any  framework
-// and library.
-// This will indicate whether a site is UP or DOWN by sending SMS on mobile
-// phone
-
-//reuired dependencies
 var http = require("http");
 var https = require("https");
 var url = require("url");
 var StringDecoder = require("string_decoder").StringDecoder;
-var config = require("./config");
+var config = require("./lib/config");
 var fs = require("fs");
-var _data = require("./lib/data");
+var handlers = require("./lib/handlers");
+var helpers = require("./lib/helpers");
 
-_data.delete("test", "file11", function(err) {
-  console.log(err);
-});
-
-//Instantenous HTTP server and running
+// Instantiate the HTTP server
 var httpServer = http.createServer(function(req, res) {
   unifiedServer(req, res);
 });
 
+// Start the HTTP server
 httpServer.listen(config.httpPort, function() {
-  console.log(
-    `The server is listening on port ${config.httpPort} in ${
-      config.envName
-    } mode`
-  );
+  console.log("The HTTP server is running on port " + config.httpPort);
 });
-//Instantenous HTTPS server and running
+
+// Instantiate the HTTPS server
 var httpsServerOptions = {
   key: fs.readFileSync("./https/key.pem"),
   cert: fs.readFileSync("./https/cert.pem")
@@ -38,49 +26,31 @@ var httpsServer = https.createServer(httpsServerOptions, function(req, res) {
   unifiedServer(req, res);
 });
 
+// Start the HTTPS server
 httpsServer.listen(config.httpsPort, function() {
-  console.log(
-    `The server is listening on port ${config.httpsPort} in ${
-      config.envName
-    } mode`
-  );
+  console.log("The HTTPS server is running on port " + config.httpsPort);
 });
 
-//defines the handlers
-var handlers = {};
-
-handlers.ping = function(data, callback) {
-  callback(200);
-};
-handlers.notFound = function(data, callback) {
-  callback(404);
-};
-//define a request router
-var router = {
-  ping: handlers.ping
-};
-
-//All the servers logic for both the http and https servers
+// All the server logic for both the http and https server
 var unifiedServer = function(req, res) {
-  //parsed url var
+  // Parse the url
   var parsedUrl = url.parse(req.url, true);
-  //extracr relative url path
+
+  // Get the path
   var path = parsedUrl.pathname;
-  //trim url (slases)
   var trimmedPath = path.replace(/^\/+|\/+$/g, "");
 
-  //extract query  parameters
+  // Get the query string as an object
   var queryStringObject = parsedUrl.query;
 
-  //find methods of request
+  // Get the HTTP method
   var method = req.method.toLowerCase();
 
-  //headers in post request
+  //Get the headers as an object
   var headers = req.headers;
 
+  // Get the payload,if any
   var decoder = new StringDecoder("utf-8");
-
-  //read payload header in buffer
   var buffer = "";
   req.on("data", function(data) {
     buffer += decoder.write(data);
@@ -88,28 +58,43 @@ var unifiedServer = function(req, res) {
   req.on("end", function() {
     buffer += decoder.end();
 
-    //choose the handler to  send for a particular request if not any route send to 404
+    // Check the router for a matching path for a handler. If one is not found, use the notFound handler instead.
     var chosenHandler =
       typeof router[trimmedPath] !== "undefined"
         ? router[trimmedPath]
         : handlers.notFound;
+
+    // Construct the data object to send to the handler
     var data = {
       trimmedPath: trimmedPath,
       queryStringObject: queryStringObject,
       method: method,
       headers: headers,
-      payload: buffer
+      payload: helpers.parseJsonToObject(buffer)
     };
 
+    // Route the request to the handler specified in the router
     chosenHandler(data, function(statusCode, payload) {
-      statusCode = typeof statusCode == "number" ? statusCode : "200";
+      // Use the status code returned from the handler, or set the default status code to 200
+      statusCode = typeof statusCode == "number" ? statusCode : 200;
+
+      // Use the payload returned from the handler, or set the default payload to an empty object
       payload = typeof payload == "object" ? payload : {};
 
+      // Convert the payload to a string
       var payloadString = JSON.stringify(payload);
+
+      // Return the response
       res.setHeader("Content-Type", "application/json");
       res.writeHead(statusCode);
       res.end(payloadString);
-      console.log("Returning the response :", statusCode, payloadString);
+      console.log(trimmedPath, statusCode);
     });
   });
+};
+
+// Define the request router
+var router = {
+  ping: handlers.ping,
+  users: handlers.users
 };
